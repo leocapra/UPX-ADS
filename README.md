@@ -1,50 +1,187 @@
-# Welcome to your Expo app 👋
+# 📱 BoraUni - Aplicativo de Carona Universitária
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+![Logo BoraUni](./assets/logo.png)
 
-## Get started
+---
 
-1. Install dependencies
+## Índice
 
+- [1. Visão Geral](#1-visão-geral)
+- [2. Tecnologias Utilizadas](#2-tecnologias-utilizadas)
+- [3. Funcionalidades Principais](#3-funcionalidades-principais)
+- [4. Estrutura do Projeto](#4-estrutura-do-projeto)
+- [5. Roadmap de Desenvolvimento](#5-roadmap-de-desenvolvimento)
+- [6. Configuração do Ambiente](#6-configuração-do-ambiente)
+- [7. Como Rodar o Projeto](#7-como-rodar-o-projeto)
+- [8. Considerações Finais](#8-considerações-finais)
+
+---
+
+## 1. Visão Geral
+
+**Nome do Projeto:** BoraUni
+
+**Descrição:**
+O **BoraUni** é um aplicativo mobile de carona compartilhada para universitários, desenvolvido em **React Native** com Expo. Ele conecta estudantes que desejam dividir caronas para a faculdade, reduzindo custos, minimizando impactos ambientais e fortalecendo o espírito colaborativo.
+
+**Contexto Acadêmico:**
+- **Disciplina:** UPX - 4
+- **Semestre:** Semestre 4
+- **Universidade:** FACENS
+- **Professor:** FERNANDO XAVIER
+
+---
+
+## 2. Tecnologias Utilizadas
+
+**Frontend Mobile:**
+- React Native + Expo (CLI)
+- Expo Router / React Navigation
+- Axios para chamadas HTTP
+
+**Backend:**
+- Node.js e Express
+- TypeORM (com PostgreSQL)
+- Autenticação: JWT
+
+**Banco de Dados:**
+- PostgreSQL
+
+**Arquitetura & Padrões:**
+- SOLID
+- Injeção de Dependência
+
+**Infraestrutura:**
+- Docker (Containers para backend e banco)
+- Migrations & Seeds
+
+---
+
+## 3. Funcionalidades Principais
+
+### 3.1 Autenticação
+- Registro e login de usuários (estudantes e motoristas)
+- Validação de entrada e segurança JWT
+
+### 3.2 Cadastro de Veículos (Motoristas)
+- Motoristas podem cadastrar informações do veículo (modelo, placa, vagas)
+
+### 3.3 Publicação e Busca de Caronas
+- Motoristas criam ofertas de carona: origem, destino, data/hora, vagas
+- Passageiros buscam caronas por filtros de rota e horário
+- Sistema de reserva e confirmação de vaga
+
+### 3.4 Chat em Tempo Real
+- Conversas entre motorista e passageiro para combinar detalhes
+- Notificações de novas mensagens
+
+### 3.5 Avaliação e Feedback
+- Motoristas e passageiros avaliam-se mutuamente após a viagem
+- Mecanismo de reputação para segurança
+
+---
+
+## 4. Estrutura do Projeto
+
+```
+/borauni-app
+├── mobile/                 # App React Native (Expo)
+│   ├── assets/             # Logo, imagens, fontes
+│   ├── src/
+│   │   ├── components/     # Componentes reutilizáveis
+│   │   ├── screens/        # Telas (Login, Cadastro, Home, etc.)
+│   │   └── services/       # API calls (Axios)
+│   └── app.json            # Configuração do Expo
+├── server/                 # Backend Node.js
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── entities/       # TypeORM entities
+│   │   ├── migrations/
+│   │   ├── routes/
+│   │   └── index.ts        # Entrypoint
+│   ├── ormconfig.js        # Configuração TypeORM
+│   └── docker-compose.yml  # Serviços Docker
+└── README.md               # Documentação
+```
+
+---
+
+## 5. Roadmap de Desenvolvimento
+
+1. **Planejamento & Setup**
+   - Definição da arquitetura
+   - Configuração Docker / Expo CLI
+2. **Backend**
+   - Entidades e migrations (usuário, veículo, carona)
+   - Endpoints de autenticação e CRUD de caronas
+3. **Mobile App**
+   - Telas de login, cadastro e fluxo de navegação
+   - Integração com API (Axios + JWT)
+4. **Recursos Avançados**
+   - Chat em tempo real (WebSocket ou Pusher)
+   - Sistema de avaliações
+5. **Testes & Deploy**
+   - Testes unitários e integração
+   - Deploy backend (Heroku, AWS, etc.) e app Expo
+
+---
+
+## 6. Configuração do Ambiente
+
+### Pré-requisitos
+- Node.js ≥ 16.x
+- npm ou Yarn
+- Docker & Docker Compose
+- Expo CLI
+
+### Passo a passo
+1. Clone o repositório:
    ```bash
+   git clone https://github.com/seu-usuario/borauni-app.git
+   cd borauni-app
+   ```
+2. Configurar variáveis de ambiente:
+   - Copie `.env.example` para `.env` e preencha
+3. Subir containers Docker:
+   ```bash
+   docker-compose up -d
+   ```
+4. Instalar dependências backend:
+   ```bash
+   cd server
+   npm install
+   npm run typeorm:run
+   ```
+5. Instalar dependências mobile:
+   ```bash
+   cd ../mobile
    npm install
    ```
 
-2. Start the app
+---
 
-   ```bash
-    npx expo start
-   ```
+## 7. Como Rodar o Projeto
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### Backend
 ```bash
-npm run reset-project
+cd server
+npm run dev
 ```
+A API ficará disponível em `http://localhost:3000`.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Mobile App
+```bash
+cd mobile
+expo start
+```
+Use um emulador Android/iOS ou o app Expo Go para visualizar.
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 8. Considerações Finais
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Este README serve como guia completo para configuração e desenvolvimento do **BoraUni**. Qualquer contribuição é bem-vinda! Para dúvidas ou sugestões, abra uma issue ou entre em contato.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+<p align="center">Desenvolvido com ❤️ por Grupo 09 - 2025</p>
