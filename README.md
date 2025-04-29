@@ -1,6 +1,6 @@
 # 📱 BoraUni - FrontEnd- Aplicativo de Carona Universitária
 
-![Logo BoraUni](./assets/logo.png)
+![Logo BoraUni](./assets/images/bora-uni-logo.png)
 
 ---
 
