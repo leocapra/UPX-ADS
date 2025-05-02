@@ -10,7 +10,11 @@ export default function Layout() {
           animation: Platform.OS === "android" ? "slide_from_right" : "default",
           headerShown: false,
         }}
-      />
+      >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(student)" options={{ headerShown: false }} />
+        <Stack.Screen name="(driver)" options={{ headerShown: false }} />
+      </Stack>
       <Toast />
     </>
   );

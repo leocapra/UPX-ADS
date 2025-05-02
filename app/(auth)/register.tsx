@@ -174,8 +174,8 @@ export default function RegisterScreen() {
           <Image
             source={
               role === "driver"
-                ? require("../assets/images/persona-motorista.png")
-                : require("../assets/images/persona-estudante.png")
+                ? require("../../assets/images/persona-motorista.png")
+                : require("../../assets/images/persona-estudante.png")
             }
             style={registerStyles.persona}
           />

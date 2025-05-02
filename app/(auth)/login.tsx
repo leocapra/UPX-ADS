@@ -1,3 +1,4 @@
+// app/(auth)/login.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -11,6 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "@/services/authService";
 
 export default function LoginScreen() {
@@ -58,12 +60,18 @@ export default function LoginScreen() {
         role: role === "driver" ? 3 : 4,
       });
 
+      const { token, user } = response;
+
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+
       showSuccess();
+
       setTimeout(() => {
-        if (role === "driver") {
-          router.push({ pathname: "/DriverHome", params: { role: "driver" } });
-        } else if (role === "student") {
-          router.push({ pathname: "/StudentHome", params: { role: "student" } });
+        if (user.role_id === 3) {
+          // router.push("/(driver)");
+        } else if (user.role_id === 4) {
+          router.push("/(student)");
         }
       }, 1500);
     } catch (error: any) {
@@ -86,8 +94,8 @@ export default function LoginScreen() {
       <Image
         source={
           role === "driver"
-            ? require("../assets/images/persona-motorista.png")
-            : require("../assets/images/persona-estudante.png")
+            ? require("../../assets/images/persona-motorista.png")
+            : require("../../assets/images/persona-estudante.png")
         }
         style={styles.persona}
       />
