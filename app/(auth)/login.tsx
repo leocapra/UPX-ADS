@@ -1,5 +1,5 @@
 // app/(auth)/login.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUser } from "@/services/authService";
+import { authService } from "@/services/authService";
+import { useMutation } from "@/hooks/useMutation";
 
 export default function LoginScreen() {
   const { role } = useLocalSearchParams();
@@ -21,15 +22,8 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleGoBack = () => {
-    router.push("/");
-  };
-
-  const handleNavigateToRegister = () => {
-    router.push({ pathname: "/register", params: { role } });
-  };
+  const [login, isLoading] = useMutation(authService.loginUser);
 
   const showError = (message: string) => {
     Toast.show({
@@ -52,15 +46,16 @@ export default function LoginScreen() {
       return showError("Preencha todos os campos.");
     }
 
-    setLoading(true);
     try {
-      const response = await loginUser({
+      const response = await login({
         email,
         senha,
         role: role === "driver" ? 3 : 4,
       });
 
-      const { token, user } = response;
+      const { token, user } = response.data;
+
+      console.log(`response data`, response.data)
 
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -70,7 +65,7 @@ export default function LoginScreen() {
       setTimeout(() => {
         if (user.role_id === 3) {
           // router.push("/(driver)");
-        } else if (user.role_id === 4) {
+        } else {
           router.push("/(student)");
         }
       }, 1500);
@@ -80,14 +75,15 @@ export default function LoginScreen() {
         error?.message ||
         "Erro ao realizar login";
       showError(msg);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push("/")}
+      >
         <Ionicons name="arrow-back" size={24} color="#0a7d42" />
       </TouchableOpacity>
 
@@ -124,16 +120,16 @@ export default function LoginScreen() {
       <TouchableOpacity
         style={styles.loginButton}
         onPress={handleLogin}
-        disabled={loading}
+        disabled={isLoading}
       >
         <Text style={styles.loginButtonText}>
-          {loading ? "Entrando..." : "Entrar"}
+          {isLoading ? "Entrando..." : "Entrar"}
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.registerLink}
-        onPress={handleNavigateToRegister}
+        onPress={() => router.push({ pathname: "/register", params: { role } })}
       >
         <Text style={styles.registerLinkText}>
           Não tem uma conta?{" "}

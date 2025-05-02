@@ -20,7 +20,7 @@ export default function StudentHeader() {
     >
       <Image
         source={require("@/assets/images/bora-uni-logo.png")}
-        style={{ width: 120, height: 40, resizeMode: "contain" }}
+        style={{ width: 120, height: 60, resizeMode: "contain" }}
       />
       <View style={{ flex: 1 }} />
       <DrawerToggleButton tintColor="#0a7d42" />

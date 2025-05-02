@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// app/(auth)/register.tsx
+import React from "react";
 import {
   View,
   TextInput,
@@ -10,14 +11,21 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { registerUser } from "@/services/authService";
+import { authService } from "@/services/authService";
 import { registerStyles } from "./registerStyles";
+import { Controller, useForm } from "react-hook-form";
+import { MaskService } from "react-native-masked-text";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useMutation } from "@/hooks/useMutation";
+import { AxiosError } from "axios";
 
 interface FormData {
   nome: string;
   sobre_nome: string;
   email: string;
   senha: string;
+  confirmSenha: string;
   cpf_cnpj: string;
   telefone: string;
   role_id: number;
@@ -30,135 +38,161 @@ interface FormData {
   curso?: string;
 }
 
+interface ErrorResponse {
+  message?: string;
+  [key: string]: any;
+}
+
 export default function RegisterScreen() {
   const { role } = useLocalSearchParams<{ role: "driver" | "student" }>();
   const router = useRouter();
 
-  const initialFormData: FormData = {
-    nome: "",
-    sobre_nome: "",
-    email: "",
-    senha: "",
-    cpf_cnpj: "",
-    telefone: "",
-    role_id: role === "driver" ? 3 : 4,
+  const schema = yup.object().shape({
+    nome: yup.string().required("Nome é obrigatório"),
+    sobre_nome: yup.string().required("Sobrenome é obrigatório"),
+    email: yup
+      .string()
+      .email("E-mail inválido")
+      .required("E-mail é obrigatório"),
+    senha: yup
+      .string()
+      .min(6, "Mínimo de 6 caracteres")
+      .required("Senha obrigatória"),
+    confirmSenha: yup
+      .string()
+      .oneOf([yup.ref("senha")], "As senhas não coincidem")
+      .required("Confirme a senha"),
+    cpf_cnpj: yup
+      .string()
+      .matches(/\d{3}\.\d{3}\.\d{3}-\d{2}/, "CPF inválido")
+      .required("CPF obrigatório"),
+    telefone: yup
+      .string()
+      .matches(/\(\d{2}\) \d{5}-\d{4}/, "Telefone inválido")
+      .required("Telefone obrigatório"),
     ...(role === "driver"
       ? {
-          placa: "",
-          modelo_veiculo: "",
-          cor_veiculo: "",
-          ano_veiculo: "",
-          numero_cnh: "",
+          placa: yup.string().required("Placa obrigatória"),
+          modelo_veiculo: yup.string().required("Modelo obrigatório"),
+          cor_veiculo: yup.string().required("Cor obrigatória"),
+          ano_veiculo: yup.string().required("Ano obrigatório"),
+          numero_cnh: yup.string().required("CNH obrigatória"),
         }
       : {
-          universidade: "",
-          curso: "",
+          universidade: yup.string().required("Universidade obrigatória"),
+          curso: yup.string().required("Curso obrigatório"),
         }),
-  };
+  });
 
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [loading, setLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      nome: "",
+      sobre_nome: "",
+      email: "",
+      senha: "",
+      confirmSenha: "",
+      cpf_cnpj: "",
+      telefone: "",
+      role_id: role === "driver" ? 3 : 4,
+      ...(role === "driver"
+        ? {
+            placa: "",
+            modelo_veiculo: "",
+            cor_veiculo: "",
+            ano_veiculo: "",
+            numero_cnh: "",
+          }
+        : {
+            universidade: "",
+            curso: "",
+          }),
+    },
+  });
 
-  const showError = (message: string) => {
+  const showToast = (
+    type: "success" | "error",
+    title: string,
+    message: string
+  ) => {
     Toast.show({
-      type: "error",
-      text1: "Erro no Cadastro",
+      type,
+      text1: title,
       text2: message,
+      visibilityTime: 4000,
+      autoHide: true,
     });
   };
 
-  const showSuccess = () => {
-    Toast.show({
-      type: "success",
-      text1: "Sucesso",
-      text2: "Cadastro realizado com sucesso!",
-    });
-  };
+  const [register, isRegistering, registerData, registerError] =
+    useMutation(authService.registerUser);
 
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async () => {
-    setLoading(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      await registerUser(formData);
-      showSuccess();
+      const response = await register(data);
+
+      const successMessage =
+        (response as { data?: ErrorResponse })?.data?.message ||
+        "Cadastro realizado com sucesso!";
+      showToast("success", "Sucesso", successMessage);
       setTimeout(() => router.back(), 1500);
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Ocorreu um erro durante o cadastro. Tente novamente.";
-      showError(msg);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Erro ao cadastrar. Tente novamente.";
+      showToast("error", "Erro no Cadastro", errorMessage);
     }
   };
 
-  const renderBasicInfo = () => (
-    <>
-      <Text style={registerStyles.sectionTitle}>Informações Básicas</Text>
-      {["nome", "sobre_nome", "email", "senha", "cpf_cnpj", "telefone"].map(
-        (field) => (
+  const renderInput = (
+    name: keyof FormData,
+    placeholder: string,
+    options: any = {}
+  ) => (
+    <Controller
+      key={name}
+      control={control}
+      name={name}
+      render={({ field: { onChange, value, onBlur } }) => (
+        <View style={{ marginBottom: 10 }}>
           <TextInput
-            key={field}
-            style={registerStyles.input}
-            placeholder={field.replace("_", " ").toUpperCase()}
-            value={formData[field as keyof FormData] as string}
-            onChangeText={(text) => handleChange(field as keyof FormData, text)}
-            secureTextEntry={field === "senha"}
-            keyboardType={
-              field === "email"
-                ? "email-address"
-                : ["cpf_cnpj", "telefone"].includes(field)
-                ? "numeric"
-                : "default"
+            style={[
+              registerStyles.input,
+              errors[name] && { borderColor: "red" },
+            ]}
+            placeholder={placeholder}
+            value={value}
+            onBlur={onBlur}
+            onChangeText={(text) =>
+              onChange(
+                name === "cpf_cnpj"
+                  ? MaskService.toMask("cpf", text)
+                  : name === "telefone"
+                  ? MaskService.toMask("cel-phone", text, {
+                      maskType: "BRL",
+                      withDDD: true,
+                      dddMask: "(15) ",
+                    })
+                  : text
+              )
             }
-            autoCapitalize={field === "email" ? "none" : "sentences"}
+            {...options}
           />
-        )
+          {errors[name] && (
+            <Text style={{ color: "red", fontSize: 12 }}>
+              {errors[name]?.message as string}
+            </Text>
+          )}
+        </View>
       )}
-    </>
+    />
   );
-
-  const renderRoleSpecificInfo = () => {
-    const fields =
-      role === "driver"
-        ? [
-            "placa",
-            "modelo_veiculo",
-            "cor_veiculo",
-            "ano_veiculo",
-            "numero_cnh",
-          ]
-        : ["universidade", "curso"];
-
-    return (
-      <>
-        <Text style={registerStyles.sectionTitle}>
-          {role === "driver"
-            ? "Informações do Motorista"
-            : "Informações Acadêmicas"}
-        </Text>
-        {fields.map((field) => (
-          <TextInput
-            key={field}
-            style={registerStyles.input}
-            placeholder={field.replace("_", " ").toUpperCase()}
-            value={formData[field as keyof FormData] as string}
-            onChangeText={(text) => handleChange(field as keyof FormData, text)}
-            keyboardType={
-              field === "ano_veiculo" || field === "numero_cnh"
-                ? "numeric"
-                : "default"
-            }
-            autoCapitalize={field === "placa" ? "characters" : "words"}
-          />
-        ))}
-      </>
-    );
-  };
 
   return (
     <>
@@ -184,21 +218,53 @@ export default function RegisterScreen() {
             Cadastro como {role === "driver" ? "Motorista" : "Estudante"}
           </Text>
 
-          {renderBasicInfo()}
-          {renderRoleSpecificInfo()}
+          <Text style={registerStyles.sectionTitle}>Informações Básicas</Text>
+          {renderInput("nome", "Nome")}
+          {renderInput("sobre_nome", "Sobrenome")}
+          {renderInput("email", "E-mail", { keyboardType: "email-address" })}
+          {renderInput("senha", "Senha", { secureTextEntry: true })}
+          {renderInput("confirmSenha", "Confirmar Senha", {
+            secureTextEntry: true,
+          })}
+          {renderInput("cpf_cnpj", "CPF", { keyboardType: "numeric" })}
+          {renderInput("telefone", "Telefone", { keyboardType: "numeric" })}
+
+          <Text style={registerStyles.sectionTitle}>
+            {role === "driver"
+              ? "Informações do Motorista"
+              : "Informações Acadêmicas"}
+          </Text>
+
+          {role === "driver" ? (
+            <>
+              {renderInput("placa", "Placa")}
+              {renderInput("modelo_veiculo", "Modelo")}
+              {renderInput("cor_veiculo", "Cor")}
+              {renderInput("ano_veiculo", "Ano")}
+              {renderInput("numero_cnh", "CNH")}
+            </>
+          ) : (
+            <>
+              {renderInput("universidade", "Universidade")}
+              {renderInput("curso", "Curso")}
+            </>
+          )}
 
           <TouchableOpacity
-            style={registerStyles.registerButton}
-            onPress={handleSubmit}
-            disabled={loading}
+            style={[
+              registerStyles.registerButton,
+              isRegistering && { opacity: 0.5 },
+            ]}
+            onPress={handleSubmit(onSubmit)}
+            disabled={isRegistering}
           >
             <Text style={registerStyles.registerButtonText}>
-              {loading ? "Cadastrando..." : "Cadastrar"}
+              {isRegistering ? "Cadastrando..." : "Cadastrar"}
             </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <Toast /> {/* Toast container */}
+      <Toast />
     </>
   );
 }

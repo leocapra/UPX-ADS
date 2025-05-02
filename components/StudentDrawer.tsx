@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   logo: {
-    width: 160,
-    height: 60,
+    width: 300,
+    height: 100,
     resizeMode: "contain",
     marginBottom: 10,
   },
@@ -83,6 +83,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: "#0a7d42",
-    marginLeft: -15,
+    marginLeft: -5,
   },
 });
