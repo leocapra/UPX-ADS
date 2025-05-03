@@ -1,4 +1,5 @@
-# 📱 BoraUni - FrontEnd- Aplicativo de Carona Universitária
+
+# 📱 BoraUni - FrontEnd - Aplicativo de Carona Universitária
 
 ![Logo BoraUni](./assets/logo.png)
 
@@ -7,13 +8,8 @@
 ## Índice
 
 - [1. Visão Geral](#1-visão-geral)
-- [2. Tecnologias Utilizadas](#2-tecnologias-utilizadas)
-- [3. Funcionalidades Principais](#3-funcionalidades-principais)
-- [4. Estrutura do Projeto](#4-estrutura-do-projeto)
-- [5. Roadmap de Desenvolvimento](#5-roadmap-de-desenvolvimento)
-- [6. Configuração do Ambiente](#6-configuração-do-ambiente)
-- [7. Como Rodar o Projeto](#7-como-rodar-o-projeto)
-- [8. Considerações Finais](#8-considerações-finais)
+- [2. Como Rodar o Projeto](#2-como-rodar-o-projeto)
+- [3. Considerações Finais](#3-considerações-finais)
 
 ---
 
@@ -22,165 +18,48 @@
 **Nome do Projeto:** BoraUni
 
 **Descrição:**
-O **BoraUni** é um aplicativo mobile de carona compartilhada para universitários, desenvolvido em **React Native** com Expo. Ele conecta estudantes que desejam dividir caronas para a faculdade, reduzindo custos, minimizando impactos ambientais e fortalecendo o espírito colaborativo.
-
-**Contexto Acadêmico:**
-- **Disciplina:** UPX - 4
-- **Semestre:** Semestre 4
-- **Universidade:** FACENS
-- **Professor:** FERNANDO XAVIER
+O **BoraUni** é um aplicativo mobile de carona compartilhada para universitários, desenvolvido em **React Native** com Expo. Ele conecta estudantes que desejam dividir caronas para a faculdade, promovendo a colaboração e ajudando a reduzir os custos de transporte.
 
 ---
 
-## 2. Tecnologias Utilizadas
+## 2. Como Rodar o Projeto
 
-**Frontend Mobile:**
-- React Native + Expo (CLI)
-- Expo Router / React Navigation
-- Axios para chamadas HTTP
+### Passo a Passo
 
-**Backend:**
-- Node.js e Express
-- TypeORM (com PostgreSQL)
-- Autenticação: JWT
+1. **Clonar o Repositório**
+   - Clone o repositório ou faça o download do arquivo ZIP do projeto:
+     ```bash
+     git clone <link>
+     cd UPX-ADS/
+     ```
 
-**Banco de Dados:**
-- PostgreSQL
+**Observação**: Caso tenha problemas com a chave SSH, você pode pedir a permissão para acesso ao repositório de forma segura, visto que não podemos divulgar a chave pública por questões de segurança.
 
-**Arquitetura & Padrões:**
-- SOLID
-- Injeção de Dependência
+2. **Trocar para o Branch `develop`**
+   - Após clonar o projeto, mude para o branch `develop`:
+     ```bash
+     git checkout develop
+     ```
 
-**Infraestrutura:**
-- Docker (Containers para backend e banco)
-- Migrations & Seeds
+3. **Instalar Dependências**
+   - No diretório raiz do projeto, instale as dependências com o NPM (Node Package Manager). Se não tiver o NPM instalado, [consulte a documentação oficial do Node.js](https://nodejs.org/en/docs/) para mais detalhes:
+     ```bash
+     npm install
+     ```
 
----
+4. **Rodar o Projeto**
+   - Para rodar o aplicativo, use o comando:
+     ```bash
+     npm run start
+     ```
 
-## 3. Funcionalidades Principais
-
-### 3.1 Autenticação
-- Registro e login de usuários (estudantes e motoristas)
-- Validação de entrada e segurança JWT
-
-### 3.2 Cadastro de Veículos (Motoristas)
-- Motoristas podem cadastrar informações do veículo (modelo, placa, vagas)
-
-### 3.3 Publicação e Busca de Caronas
-- Motoristas criam ofertas de carona: origem, destino, data/hora, vagas
-- Passageiros buscam caronas por filtros de rota e horário
-- Sistema de reserva e confirmação de vaga
-
-### 3.4 Chat em Tempo Real
-- Conversas entre motorista e passageiro para combinar detalhes
-- Notificações de novas mensagens
-
-### 3.5 Avaliação e Feedback
-- Motoristas e passageiros avaliam-se mutuamente após a viagem
-- Mecanismo de reputação para segurança
+Ou, se desejar, use os caminhos fornecidos diretamente na plataforma para avaliar a estrutura e o código do projeto.
 
 ---
 
-## 4. Estrutura do Projeto
+## 3. Considerações Finais
 
-```
-/borauni-app
-├── mobile/                 # App React Native (Expo)
-│   ├── assets/             # Logo, imagens, fontes
-│   ├── src/
-│   │   ├── components/     # Componentes reutilizáveis
-│   │   ├── screens/        # Telas (Login, Cadastro, Home, etc.)
-│   │   └── services/       # API calls (Axios)
-│   └── app.json            # Configuração do Expo
-├── server/                 # Backend Node.js
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── entities/       # TypeORM entities
-│   │   ├── migrations/
-│   │   ├── routes/
-│   │   └── index.ts        # Entrypoint
-│   ├── ormconfig.js        # Configuração TypeORM
-│   └── docker-compose.yml  # Serviços Docker
-└── README.md               # Documentação
-```
-
----
-
-## 5. Roadmap de Desenvolvimento
-
-1. **Planejamento & Setup**
-   - Definição da arquitetura
-   - Configuração Docker / Expo CLI
-2. **Backend**
-   - Entidades e migrations (usuário, veículo, carona)
-   - Endpoints de autenticação e CRUD de caronas
-3. **Mobile App**
-   - Telas de login, cadastro e fluxo de navegação
-   - Integração com API (Axios + JWT)
-4. **Recursos Avançados**
-   - Chat em tempo real (WebSocket ou Pusher)
-   - Sistema de avaliações
-5. **Testes & Deploy**
-   - Testes unitários e integração
-   - Deploy backend (Heroku, AWS, etc.) e app Expo
-
----
-
-## 6. Configuração do Ambiente
-
-### Pré-requisitos
-- Node.js ≥ 16.x
-- npm ou Yarn
-- Docker & Docker Compose
-- Expo CLI
-
-### Passo a passo
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/seu-usuario/borauni-app.git
-   cd borauni-app
-   ```
-2. Configurar variáveis de ambiente:
-   - Copie `.env.example` para `.env` e preencha
-3. Subir containers Docker:
-   ```bash
-   docker-compose up -d
-   ```
-4. Instalar dependências backend:
-   ```bash
-   cd server
-   npm install
-   npm run typeorm:run
-   ```
-5. Instalar dependências mobile:
-   ```bash
-   cd ../mobile
-   npm install
-   ```
-
----
-
-## 7. Como Rodar o Projeto
-
-### Backend
-```bash
-cd server
-npm run dev
-```
-A API ficará disponível em `http://localhost:3000`.
-
-### Mobile App
-```bash
-cd mobile
-expo start
-```
-Use um emulador Android/iOS ou o app Expo Go para visualizar.
-
----
-
-## 8. Considerações Finais
-
-Este README serve como guia completo para configuração e desenvolvimento do **BoraUni**. Qualquer contribuição é bem-vinda! Para dúvidas ou sugestões, abra uma issue ou entre em contato.
+Caso tenha algum problema durante a execução do projeto ou dúvidas, entre em contato comigo no número **15981518395** para suporte.
 
 ---
 
