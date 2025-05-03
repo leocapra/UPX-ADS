@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-export const registerStyles = StyleSheet.create({
+ const registerStyles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
   },
@@ -57,3 +57,6 @@ export const registerStyles = StyleSheet.create({
     alignSelf: "center",
   },
 });
+
+
+export { registerStyles }

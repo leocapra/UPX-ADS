@@ -1,3 +1,4 @@
+// app/(driver)/index.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -16,18 +17,24 @@ import Toast from "react-native-toast-message";
 
 interface UserData {
   email: string;
-  universidade?: string;
-  curso?: string;
   telefone?: string;
+  placa?: string;
+  veiculo?: string;
+  cor_veiculo?: string;
+  ano_veiculo?: string;
+  numero_cnh?: string;
 }
 
 export default function SettingsScreen() {
   const [user, setUser] = useState<UserData | null>(null);
   const [formData, setFormData] = useState<UserData>({
     email: "",
-    universidade: "",
-    curso: "",
     telefone: "",
+    placa: "",
+    veiculo: "",
+    cor_veiculo: "",
+    ano_veiculo: "",
+    numero_cnh: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,9 +49,12 @@ export default function SettingsScreen() {
           setUser(freshData);
           setFormData({
             email: freshData.email || "",
-            universidade: freshData.universidade || "",
-            curso: freshData.curso || "",
             telefone: freshData.telefone || "",
+            placa: freshData.placa || "",
+            veiculo: freshData.veiculo || "",
+            cor_veiculo: freshData.cor_veiculo || "",
+            ano_veiculo: freshData.ano_veiculo || "",
+            numero_cnh: freshData.numero_cnh || "",
           });
         }
       } catch (error) {
@@ -58,9 +68,12 @@ export default function SettingsScreen() {
                 setUser(parsedUser);
                 setFormData({
                   email: parsedUser.email || "",
-                  universidade: parsedUser.universidade || "",
-                  curso: parsedUser.curso || "",
                   telefone: parsedUser.telefone || "",
+                  placa: parsedUser.placa || "",
+                  veiculo: parsedUser.veiculo || "",
+                  cor_veiculo: parsedUser.cor_veiculo || "",
+                  ano_veiculo: parsedUser.ano_veiculo || "",
+                  numero_cnh: parsedUser.numero_cnh || "",
                 });
               }
             } catch (parseError) {
@@ -112,8 +125,16 @@ export default function SettingsScreen() {
   };
 
   const validateForm = () => {
-    if (!formData.email || !formData.telefone) {
-      showErrorToast("Email e telefone são obrigatórios");
+    if (
+      !formData.email ||
+      !formData.telefone ||
+      !formData.placa ||
+      !formData.veiculo ||
+      !formData.cor_veiculo ||
+      !formData.ano_veiculo ||
+      !formData.numero_cnh
+    ) {
+      showErrorToast("Todos os campos são obrigatórios");
       return false;
     }
     return true;
@@ -162,7 +183,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Configurações</Text>
+      <Text style={styles.title}>Configurações do Motorista</Text>
 
       <View style={styles.formGroup}>
         <Text style={styles.label}>Email</Text>
@@ -185,26 +206,62 @@ export default function SettingsScreen() {
           }
           keyboardType="phone-pad"
           editable={isEditing}
-          maxLength={15} // (XX) XXXXX-XXXX
+          maxLength={15}
         />
       </View>
 
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Universidade</Text>
+        <Text style={styles.label}>Placa do Veículo</Text>
         <TextInput
           style={styles.input}
-          value={formData.universidade}
-          onChangeText={(text) => handleInputChange("universidade", text)}
+          value={formData.placa}
+          onChangeText={(text) =>
+            handleInputChange("placa", text.toUpperCase())
+          }
+          editable={isEditing}
+          maxLength={7}
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Modelo do Veículo</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.veiculo}
+          onChangeText={(text) => handleInputChange("veiculo", text)}
           editable={isEditing}
         />
       </View>
 
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Curso</Text>
+        <Text style={styles.label}>Cor do Veículo</Text>
         <TextInput
           style={styles.input}
-          value={formData.curso}
-          onChangeText={(text) => handleInputChange("curso", text)}
+          value={formData.cor_veiculo}
+          onChangeText={(text) => handleInputChange("cor_veiculo", text)}
+          editable={isEditing}
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Ano do Veículo</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.ano_veiculo}
+          onChangeText={(text) => handleInputChange("ano_veiculo", text)}
+          keyboardType="numeric"
+          editable={isEditing}
+          maxLength={4}
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Número da CNH</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.numero_cnh}
+          onChangeText={(text) => handleInputChange("numero_cnh", text)}
+          keyboardType="numeric"
           editable={isEditing}
         />
       </View>
@@ -233,9 +290,12 @@ export default function SettingsScreen() {
               setIsEditing(false);
               setFormData({
                 email: user.email || "",
-                universidade: user.universidade || "",
-                curso: user.curso || "",
                 telefone: user.telefone || "",
+                placa: user.placa || "",
+                veiculo: user.veiculo || "",
+                cor_veiculo: user.cor_veiculo || "",
+                ano_veiculo: user.ano_veiculo || "",
+                numero_cnh: user.numero_cnh || "",
               });
             }}
           >

@@ -64,7 +64,7 @@ export default function LoginScreen() {
 
       setTimeout(() => {
         if (user.role_id === 3) {
-          // router.push("/(driver)");
+          router.push("/(driver)");
         } else {
           router.push("/(student)");
         }

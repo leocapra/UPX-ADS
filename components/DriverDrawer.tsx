@@ -4,7 +4,7 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-export function CustomDrawerContent(props: any) {
+export function CustomDrawerContentDriver(props: any) {
   const router = useRouter();
 
   return (
@@ -18,7 +18,7 @@ export function CustomDrawerContent(props: any) {
 
       <DrawerItem
         label="Início"
-        onPress={() => router.push("/(student)")}
+        onPress={() => router.push("/(driver)")}
         icon={({ color, size }) => (
           <Ionicons name="home" size={size} color="#0a7d42" />
         )}
@@ -28,7 +28,7 @@ export function CustomDrawerContent(props: any) {
 
       <DrawerItem
         label="Meu Perfil"
-        onPress={() => router.push("../(student)/profile")}
+        onPress={() => router.push("../(driver)/profile")}
         icon={({ color, size }) => (
           <Ionicons name="person" size={size} color="#0a7d42" />
         )}
@@ -38,7 +38,7 @@ export function CustomDrawerContent(props: any) {
 
       <DrawerItem
         label="Configurações"
-        onPress={() => router.push("../(student)/settings")}
+        onPress={() => router.push("../(driver)/settings")}
         icon={({ color, size }) => (
           <Ionicons name="settings" size={size} color="#0a7d42" />
         )}
@@ -49,7 +49,7 @@ export function CustomDrawerContent(props: any) {
       <DrawerItem
         label="Sair"
         onPress={() =>
-          router.push({ pathname: "/login", params: { role: "student" } })
+          router.push({ pathname: "/login", params: { role: "driver" } })
         }
         icon={({ color, size }) => (
           <Ionicons name="log-out" size={size} color="#ff4444" />
@@ -59,6 +59,7 @@ export function CustomDrawerContent(props: any) {
       />
     </DrawerContentScrollView>
   );
+
 }
 
 const styles = StyleSheet.create({

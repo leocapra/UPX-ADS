@@ -30,7 +30,7 @@ interface FormData {
   telefone: string;
   role_id: number;
   placa?: string;
-  modelo_veiculo?: string;
+  veiculo?: string;
   cor_veiculo?: string;
   ano_veiculo?: string;
   numero_cnh?: string;
@@ -73,7 +73,7 @@ export default function RegisterScreen() {
     ...(role === "driver"
       ? {
           placa: yup.string().required("Placa obrigatória"),
-          modelo_veiculo: yup.string().required("Modelo obrigatório"),
+          veiculo: yup.string().required("Modelo obrigatório"),
           cor_veiculo: yup.string().required("Cor obrigatória"),
           ano_veiculo: yup.string().required("Ano obrigatório"),
           numero_cnh: yup.string().required("CNH obrigatória"),
@@ -102,7 +102,7 @@ export default function RegisterScreen() {
       ...(role === "driver"
         ? {
             placa: "",
-            modelo_veiculo: "",
+            veiculo: "",
             cor_veiculo: "",
             ano_veiculo: "",
             numero_cnh: "",
@@ -238,10 +238,12 @@ export default function RegisterScreen() {
           {role === "driver" ? (
             <>
               {renderInput("placa", "Placa")}
-              {renderInput("modelo_veiculo", "Modelo")}
+              {renderInput("veiculo", "Modelo")}
               {renderInput("cor_veiculo", "Cor")}
               {renderInput("ano_veiculo", "Ano")}
               {renderInput("numero_cnh", "CNH")}
+              {renderInput("veiculo", "veiculo")}
+
             </>
           ) : (
             <>
