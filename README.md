@@ -67,3 +67,40 @@ Caso tenha algum problema durante a execução do projeto ou dúvidas, entre em 
 ---
 
 <p align="center">Desenvolvido com ❤️ por Grupo 09 - 2025</p>
+
+Explicação da Estrutura do Projeto React Native
+Nosso projeto foi organizado de forma modular para facilitar a manutenção e o desenvolvimento. Aqui está a estrutura principal:
+
+Estrutura de Pastas
+
+app: Contém os arquivos gerais do aplicativo.
+
+auth: Responsável por todo o sistema de autenticação (login, cadastro, etc.).
+
+driver: Contém todas as funcionalidades do aplicativo para motoristas.
+
+student: Contém todas as funcionalidades do aplicativo para estudantes.
+
+Assets
+
+Dentro de @/assets, temos todas as imagens fornecidas para o projeto.
+
+Services
+
+A pasta services contém as configurações relacionadas ao Axios, que é a biblioteca que usamos para fazer as interações com o backend. Dentro dela, temos o arquivo api.ts, que configura a API de forma global.
+
+Além disso, as chamadas à API são organizadas por módulos, dividindo os serviços em categorias para facilitar a manutenção e seguir boas práticas de desenvolvimento.
+
+Components
+
+Não houve grandes alterações nos componentes padrão do Expo. Usamos o que já estava pré-configurado para garantir a integração rápida.
+
+Hooks Personalizados
+
+Criamos dois hooks personalizados para facilitar as chamadas à API:
+
+useMutation: Utilizado principalmente para métodos POST, PUT, DELETE, PATCH, etc. É ideal para chamadas que alteram dados no backend.
+
+useQuery: Utilizado para chamadas GET, onde buscamos dados do backend sem alterar seu estado.
+
+Basicamente, esses hooks são importados para os componentes onde são necessários, tornando o código mais organizado e reutilizável.
