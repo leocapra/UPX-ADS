@@ -1,6 +1,10 @@
 
 # 📱 BoraUni - FrontEnd - Aplicativo de Carona Universitária
 
+antes de começar saiba que é necessario usar o nosso backend para a execução do endpoint da aplicação
+
+https://github.com/leocapra/UPX-ADS/tree/main
+
 ![Logo BoraUni](./assets/logo.png)
 
 ---
