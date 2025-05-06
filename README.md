@@ -62,7 +62,7 @@ Ou, se desejar, use os caminhos fornecidos diretamente na plataforma para avalia
 
 ## 3. Considerações Finais
 
-Caso tenha algum problema durante a execução do projeto ou dúvidas, entre em contato comigo no número **15981518395** para suporte.
+Caso tenha algum problema durante a execução do projeto ou dúvidas, entre em contato comigo no número * para suporte.
 
 ---
 
