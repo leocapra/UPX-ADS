@@ -1,51 +1,33 @@
-// app/(auth)/register.tsx
-import React from "react";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Text,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Image, ScrollView, StyleSheet, ImageBackground } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { authService } from "@/services/authService";
-import { registerStyles } from "./registerStyles";
-import { Controller, useForm } from "react-hook-form";
-import { MaskService } from "react-native-masked-text";
+import { Formik } from "formik";
 import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { MaskService } from "react-native-masked-text";
 import { useMutation } from "@/hooks/useMutation";
 import { AxiosError } from "axios";
-
-interface FormData {
-  nome: string;
-  sobre_nome: string;
-  email: string;
-  senha: string;
-  confirmSenha: string;
-  cpf_cnpj: string;
-  telefone: string;
-  role_id: number;
-  placa?: string;
-  veiculo?: string;
-  cor_veiculo?: string;
-  ano_veiculo?: string;
-  numero_cnh?: string;
-  universidade?: string;
-  curso?: string;
-}
-
-interface ErrorResponse {
-  message?: string;
-  [key: string]: any;
-}
+import {
+  TextInput,
+  Button,
+  Text,
+  Menu,
+  Divider,
+  Provider as PaperProvider,
+  TouchableRipple,
+  useTheme,
+} from "react-native-paper";
+import { greenTheme } from "../AppTheme";
 
 export default function RegisterScreen() {
   const { role } = useLocalSearchParams<{ role: "driver" | "student" }>();
   const router = useRouter();
+  const theme = useTheme();
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
+  const [anoMenuVisible, setAnoMenuVisible] = useState(false);
 
   const schema = yup.object().shape({
     nome: yup.string().required("Nome é obrigatório"),
@@ -73,10 +55,16 @@ export default function RegisterScreen() {
     ...(role === "driver"
       ? {
           placa: yup.string().required("Placa obrigatória"),
-          veiculo: yup.string().required("Modelo obrigatório"),
+          veiculo: yup.string().required("Veículo obrigatório"),
           cor_veiculo: yup.string().required("Cor obrigatória"),
-          ano_veiculo: yup.string().required("Ano obrigatório"),
-          numero_cnh: yup.string().required("CNH obrigatória"),
+          ano_veiculo: yup
+            .number()
+            .typeError("O Ano deve ser um número")
+            .required("Ano obrigatório"),
+          numero_cnh: yup
+            .string()
+            .matches(/^\d{11}$/, "CNH deve conter exatamente 11 dígitos")
+            .required("CNH obrigatória"),
         }
       : {
           universidade: yup.string().required("Universidade obrigatória"),
@@ -84,35 +72,16 @@ export default function RegisterScreen() {
         }),
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<any>({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      nome: "",
-      sobre_nome: "",
-      email: "",
-      senha: "",
-      confirmSenha: "",
-      cpf_cnpj: "",
-      telefone: "",
-      role_id: role === "driver" ? 3 : 4,
-      ...(role === "driver"
-        ? {
-            placa: "",
-            veiculo: "",
-            cor_veiculo: "",
-            ano_veiculo: "",
-            numero_cnh: "",
-          }
-        : {
-            universidade: "",
-            curso: "",
-          }),
-    },
-  });
+  const generateYearOptions = () => {
+    const years = [];
+    const currentYear = new Date().getFullYear();
+    for (let year = 2012; year <= currentYear; year++) {
+      years.push(year);
+    }
+    return years.reverse();
+  };
+
+  const [register, isRegistering] = useMutation(authService.registerUser);
 
   const showToast = (
     type: "success" | "error",
@@ -128,145 +97,336 @@ export default function RegisterScreen() {
     });
   };
 
-  const [register, isRegistering, registerData, registerError] =
-    useMutation(authService.registerUser);
+  const renderInput = (
+    fieldProps: any,
+    name: string,
+    label: string,
+    options: any = {}
+  ) => {
+    const hasError = !!fieldProps.errors[name] && fieldProps.touched[name];
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      const response = await register(data);
+    // Tratamento especial para campos com máscara
+    const handleChange = (text: string) => {
+      let processedText = text;
 
-      const successMessage =
-        (response as { data?: ErrorResponse })?.data?.message ||
-        "Cadastro realizado com sucesso!";
-      showToast("success", "Sucesso", successMessage);
-      setTimeout(() => router.back(), 1500);
-    } catch (error) {
-      const err = error as AxiosError<ErrorResponse>;
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Erro ao cadastrar. Tente novamente.";
-      showToast("error", "Erro no Cadastro", errorMessage);
-    }
+      if (name === "cpf_cnpj") {
+        processedText = MaskService.toMask("cpf", text);
+      } else if (name === "telefone") {
+        processedText = MaskService.toMask("cel-phone", text, {
+          maskType: "BRL",
+          withDDD: true,
+          dddMask: "(99) ",
+        });
+      } else if (name === "numero_cnh") {
+        // Remove caracteres não numéricos e limita a 11 dígitos
+        processedText = text.replace(/[^0-9]/g, "").slice(0, 11);
+      }
+
+      fieldProps.setFieldValue(name, processedText);
+    };
+
+    return (
+      <View key={name} style={styles.inputContainer}>
+        <TextInput
+          mode="outlined"
+          label={label}
+          value={fieldProps.values[name]}
+          onBlur={fieldProps.handleBlur(name)}
+          onChangeText={handleChange}
+          error={hasError}
+          style={styles.input}
+          {...options}
+        />
+        {hasError && (
+          <Text style={styles.errorText}>
+            {fieldProps.errors[name] as string}
+          </Text>
+        )}
+      </View>
+    );
   };
 
-  const renderInput = (
-    name: keyof FormData,
-    placeholder: string,
-    options: any = {}
-  ) => (
-    <Controller
-      key={name}
-      control={control}
-      name={name}
-      render={({ field: { onChange, value, onBlur } }) => (
-        <View style={{ marginBottom: 10 }}>
-          <TextInput
-            style={[
-              registerStyles.input,
-              errors[name] && { borderColor: "red" },
-            ]}
-            placeholder={placeholder}
-            value={value}
-            onBlur={onBlur}
-            onChangeText={(text) =>
-              onChange(
-                name === "cpf_cnpj"
-                  ? MaskService.toMask("cpf", text)
-                  : name === "telefone"
-                  ? MaskService.toMask("cel-phone", text, {
-                      maskType: "BRL",
-                      withDDD: true,
-                      dddMask: "(15) ",
-                    })
-                  : text
-              )
-            }
-            {...options}
-          />
-          {errors[name] && (
-            <Text style={{ color: "red", fontSize: 12 }}>
-              {errors[name]?.message as string}
-            </Text>
-          )}
-        </View>
-      )}
-    />
-  );
+  const renderAnoSelect = (fieldProps: any) => {
+    const hasError =
+      !!fieldProps.errors.ano_veiculo && fieldProps.touched.ano_veiculo;
+    const anos = generateYearOptions();
+
+    return (
+      <View style={styles.inputContainer}>
+        <Menu
+          visible={anoMenuVisible}
+          onDismiss={() => setAnoMenuVisible(false)}
+          anchor={
+            <TouchableRipple onPress={() => setAnoMenuVisible(true)}>
+              <TextInput
+                mode="outlined"
+                label="Ano do Veículo"
+                value={
+                  fieldProps.values.ano_veiculo
+                    ? fieldProps.values.ano_veiculo.toString()
+                    : ""
+                }
+                editable={false}
+                error={hasError}
+                right={<TextInput.Icon icon="menu-down" />}
+              />
+            </TouchableRipple>
+          }
+          style={styles.menu}
+        >
+          <ScrollView style={{ maxHeight: 200 }}>
+            {anos.map((ano) => (
+              <Menu.Item
+                key={ano}
+                title={ano.toString()}
+                onPress={() => {
+                  fieldProps.setFieldValue("ano_veiculo", ano);
+                  setAnoMenuVisible(false);
+                }}
+              />
+            ))}
+          </ScrollView>
+        </Menu>
+        {hasError && (
+          <Text style={styles.errorText}>
+            {fieldProps.errors.ano_veiculo as string}
+          </Text>
+        )}
+      </View>
+    );
+  };
 
   return (
-    <>
-      <ScrollView contentContainerStyle={registerStyles.scrollContainer}>
-        <View style={registerStyles.container}>
-          <TouchableOpacity
-            style={registerStyles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#0a7d42" />
-          </TouchableOpacity>
+    <PaperProvider theme={greenTheme}>
+      <ImageBackground
+        source={require("../../assets/images/green-waves-bg.png")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <Formik
+          initialValues={{
+            nome: "",
+            sobre_nome: "",
+            email: "",
+            senha: "",
+            confirmSenha: "",
+            cpf_cnpj: "",
+            telefone: "",
+            role_id: role === "driver" ? 3 : 4,
+            ...(role === "driver"
+              ? {
+                  placa: "",
+                  veiculo: "",
+                  cor_veiculo: "",
+                  ano_veiculo: "",
+                  numero_cnh: "",
+                }
+              : { universidade: "", curso: "" }),
+          }}
+          validationSchema={schema}
+          onSubmit={async (values) => {
+            try {
+              const response = await register(values);
+              const successMessage =
+                response?.data?.message || "Cadastro realizado com sucesso!";
+              showToast("success", "Sucesso", successMessage);
+              setTimeout(() => router.back(), 1500);
+            } catch (error) {
+              const err = error as AxiosError<{
+                response?: string;
+                message?: string;
+              }>;
+              const errorMessage =
+                err.response?.data?.response ||
+                err.response?.data?.message ||
+                err.message ||
+                "Erro ao cadastrar.";
 
-          <Image
-            source={
-              role === "driver"
-                ? require("../../assets/images/persona-motorista.png")
-                : require("../../assets/images/persona-estudante.png")
+              showToast("error", "Erro no Cadastro", errorMessage);
             }
-            style={registerStyles.persona}
-          />
+          }}
+        >
+          {(formikProps) => (
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+              <View style={styles.container}>
+                <TouchableRipple
+                  style={styles.backButton}
+                  onPress={() => router.back()}
+                >
+                  <Ionicons
+                    name="arrow-back"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
+                </TouchableRipple>
 
-          <Text style={registerStyles.title}>
-            Cadastro como {role === "driver" ? "Motorista" : "Estudante"}
-          </Text>
+                <Image
+                  source={
+                    role === "driver"
+                      ? require("../../assets/images/persona-motorista.png")
+                      : require("../../assets/images/persona-estudante.png")
+                  }
+                  style={styles.persona}
+                />
 
-          <Text style={registerStyles.sectionTitle}>Informações Básicas</Text>
-          {renderInput("nome", "Nome")}
-          {renderInput("sobre_nome", "Sobrenome")}
-          {renderInput("email", "E-mail", { keyboardType: "email-address" })}
-          {renderInput("senha", "Senha", { secureTextEntry: true })}
-          {renderInput("confirmSenha", "Confirmar Senha", {
-            secureTextEntry: true,
-          })}
-          {renderInput("cpf_cnpj", "CPF", { keyboardType: "numeric" })}
-          {renderInput("telefone", "Telefone", { keyboardType: "numeric" })}
+                <Text variant="headlineMedium" style={styles.title}>
+                  Cadastro como {role === "driver" ? "Motorista" : "Estudante"}
+                </Text>
 
-          <Text style={registerStyles.sectionTitle}>
-            {role === "driver"
-              ? "Informações do Motorista"
-              : "Informações Acadêmicas"}
-          </Text>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Informações Básicas
+                </Text>
 
-          {role === "driver" ? (
-            <>
-              {renderInput("placa", "Placa")}
-              {renderInput("veiculo", "Modelo")}
-              {renderInput("cor_veiculo", "Cor")}
-              {renderInput("ano_veiculo", "Ano")}
-              {renderInput("numero_cnh", "CNH")}
-              {renderInput("veiculo", "veiculo")}
+                {renderInput(formikProps, "nome", "Nome")}
+                {renderInput(formikProps, "sobre_nome", "Sobrenome")}
+                {renderInput(formikProps, "email", "E-mail", {
+                  keyboardType: "email-address",
+                  autoCapitalize: "none",
+                })}
 
-            </>
-          ) : (
-            <>
-              {renderInput("universidade", "Universidade")}
-              {renderInput("curso", "Curso")}
-            </>
+                {renderInput(formikProps, "senha", "Senha", {
+                  secureTextEntry: secureTextEntry,
+                  right: (
+                    <TextInput.Icon
+                      icon={secureTextEntry ? "eye-off" : "eye"}
+                      onPress={() => setSecureTextEntry(!secureTextEntry)}
+                    />
+                  ),
+                })}
+
+                {renderInput(formikProps, "confirmSenha", "Confirmar Senha", {
+                  secureTextEntry: secureConfirmTextEntry,
+                  right: (
+                    <TextInput.Icon
+                      icon={secureConfirmTextEntry ? "eye-off" : "eye"}
+                      onPress={() =>
+                        setSecureConfirmTextEntry(!secureConfirmTextEntry)
+                      }
+                    />
+                  ),
+                })}
+
+                {renderInput(formikProps, "cpf_cnpj", "CPF", {
+                  keyboardType: "numeric",
+                })}
+
+                {renderInput(formikProps, "telefone", "Telefone", {
+                  keyboardType: "phone-pad",
+                })}
+
+                <Divider style={styles.divider} />
+
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  {role === "driver"
+                    ? "Informações do Motorista"
+                    : "Informações Acadêmicas"}
+                </Text>
+
+                {role === "driver" ? (
+                  <>
+                    {renderInput(formikProps, "placa", "Placa do Veículo")}
+                    {renderInput(formikProps, "cor_veiculo", "Cor do Veículo")}
+                    {renderAnoSelect(formikProps)}
+                    {renderInput(formikProps, "numero_cnh", "Número da CNH", {
+                      keyboardType: "numeric",
+                    })}
+                    {renderInput(formikProps, "veiculo", "Modelo do Veículo")}
+                  </>
+                ) : (
+                  <>
+                    {renderInput(formikProps, "universidade", "Universidade")}
+                    {renderInput(formikProps, "curso", "Curso")}
+                  </>
+                )}
+
+                <Button
+                  mode="contained"
+                  onPress={() => formikProps.handleSubmit()}
+                  loading={isRegistering}
+                  disabled={isRegistering}
+                  style={styles.registerButton}
+                  labelStyle={styles.registerButtonText}
+                >
+                  {isRegistering ? "Cadastrando..." : "Cadastrar"}
+                </Button>
+              </View>
+            </ScrollView>
           )}
-
-          <TouchableOpacity
-            style={[
-              registerStyles.registerButton,
-              isRegistering && { opacity: 0.5 },
-            ]}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isRegistering}
-          >
-            <Text style={registerStyles.registerButtonText}>
-              {isRegistering ? "Cadastrando..." : "Cadastrar"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      <Toast />
-    </>
+        </Formik>
+        <Toast />
+      </ImageBackground>
+    </PaperProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 0,
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  backButton: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 1,
+    padding: 8,
+    borderRadius: 20,
+  },
+  persona: {
+    width: 150,
+    height: 150,
+    alignSelf: "center",
+    marginVertical: 20,
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: 20,
+    fontWeight: "bold",
+    color: "#0a7d42"
+  },
+  sectionTitle: {
+    marginTop: 15,
+    marginBottom: 10,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  input: {
+    backgroundColor: "white",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 15,
+  },
+  registerButton: {
+    marginTop: 20,
+    paddingVertical: 8,
+    backgroundColor: "#0a7d42",
+  },
+  registerButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  divider: {
+    marginVertical: 15,
+    height: 1,
+  },
+  menu: {
+    marginTop: 50,
+  },
+});

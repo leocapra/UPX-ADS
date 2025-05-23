@@ -1,23 +1,35 @@
-// src/services/api.ts
 import axios from "axios";
-import { Platform } from "react-native";
-
-const baseURL =
-  Platform.OS === "android" ? "http://localhost:3000/api" : "http://localhost:3000/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const api = axios.create({
-  baseURL,
+  baseURL: "http://192.168.100.53:3000/api",
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
+
+api.interceptors.request.use(
+  async (config) => {
+    if (!config.url?.includes("/auth")) {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn("Failed to get token from storage", error);
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    console.error("Erro na requisição:", error);
-    throw error;
+  async (error) => {
+    if (error.response?.status === 401) {
+      console.error("Unauthorized - Token may be invalid or expired");
+    }
+    return Promise.reject(error);
   }
 );
 

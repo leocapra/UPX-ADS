@@ -1,13 +1,10 @@
-// app/(auth)/login.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Platform,
-  Image,
+  ScrollView,
+  ImageBackground,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,14 +12,24 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authService } from "@/services/authService";
 import { useMutation } from "@/hooks/useMutation";
+import {
+  Text,
+  TextInput,
+  Button,
+  TouchableRipple,
+  useTheme,
+  Avatar,
+  Provider as PaperProvider,
+} from "react-native-paper";
+import { greenTheme } from "../AppTheme";
 
 export default function LoginScreen() {
   const { role } = useLocalSearchParams();
   const router = useRouter();
-
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [login, isLoading] = useMutation(authService.loginUser);
 
   const showError = (message: string) => {
@@ -54,20 +61,13 @@ export default function LoginScreen() {
       });
 
       const { token, user } = response.data;
-
-      console.log(`response data`, response.data)
-
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       showSuccess();
 
       setTimeout(() => {
-        if (user.role_id === 3) {
-          router.push("/(driver)");
-        } else {
-          router.push("/(student)");
-        }
+        router.push(user.role_id === 3 ? "/(driver)" : "/(student)");
       }, 1500);
     } catch (error: any) {
       const msg =
@@ -79,120 +79,170 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.push("/")}
+    <PaperProvider theme={greenTheme}>
+      <ImageBackground
+        source={require("../../assets/images/green-waves-bg.png")}
+        style={styles.background}
+        resizeMode="cover"
       >
-        <Ionicons name="arrow-back" size={24} color="#0a7d42" />
-      </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.container}>
+            <TouchableRipple
+              style={styles.backButton}
+              onPress={() => router.push("/")}
+              borderless
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={theme.colors.primary}
+              />
+            </TouchableRipple>
 
-      <Image
-        source={
-          role === "driver"
-            ? require("../../assets/images/persona-motorista.png")
-            : require("../../assets/images/persona-estudante.png")
-        }
-        style={styles.persona}
-      />
+            <View style={styles.card}>
+              <Avatar.Image
+                size={120}
+                source={
+                  role === "driver"
+                    ? require("../../assets/images/persona-motorista.png")
+                    : require("../../assets/images/persona-estudante.png")
+                }
+                style={styles.persona}
+              />
 
-      <Text style={styles.title}>
-        Login como {role === "driver" ? "Motorista" : "Estudante"}
-      </Text>
+              <Text variant="headlineMedium" style={styles.title}>
+                Login como {role === "driver" ? "Motorista" : "Estudante"}
+              </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
+              <TextInput
+                mode="outlined"
+                label="Email"
+                placeholder="Digite seu email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+                left={<TextInput.Icon icon="email" />}
+              />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+              <TextInput
+                mode="outlined"
+                label="Senha"
+                placeholder="Digite sua senha"
+                secureTextEntry={secureTextEntry}
+                value={senha}
+                onChangeText={setSenha}
+                style={styles.input}
+                left={<TextInput.Icon icon="lock" />}
+                right={
+                  <TextInput.Icon
+                    icon={secureTextEntry ? "eye-off" : "eye"}
+                    onPress={() => setSecureTextEntry(!secureTextEntry)}
+                  />
+                }
+              />
 
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={handleLogin}
-        disabled={isLoading}
-      >
-        <Text style={styles.loginButtonText}>
-          {isLoading ? "Entrando..." : "Entrar"}
-        </Text>
-      </TouchableOpacity>
+              <Button
+                mode="contained"
+                onPress={handleLogin}
+                loading={isLoading}
+                disabled={isLoading}
+                style={styles.loginButton}
+                labelStyle={styles.loginButtonText}
+              >
+                {isLoading ? "Entrando..." : "Entrar"}
+              </Button>
 
-      <TouchableOpacity
-        style={styles.registerLink}
-        onPress={() => router.push({ pathname: "/register", params: { role } })}
-      >
-        <Text style={styles.registerLinkText}>
-          Não tem uma conta?{" "}
-          <Text style={styles.registerLinkHighlight}>Cadastre-se</Text>
-        </Text>
-      </TouchableOpacity>
-
-      <Toast />
-    </View>
+              <Button
+                mode="text"
+                onPress={() =>
+                  router.push({ pathname: "/register", params: { role } })
+                }
+                style={styles.registerLink}
+                labelStyle={styles.registerLinkText}
+              >
+                Não tem uma conta?{" "}
+                <Text style={styles.registerLinkHighlight}>Cadastre-se</Text>
+              </Button>
+            </View>
+          </View>
+        </ScrollView>
+        <Toast />
+      </ImageBackground>
+    </PaperProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
   container: {
     flex: 1,
-    justifyContent: "center",
     padding: 24,
-    backgroundColor: "#fff",
+    justifyContent: "center",
   },
   backButton: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 20,
+    top: Platform.OS === "ios" ? 50 : 40,
     left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+  },
+  card: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    padding: 24,
+    borderRadius: 16,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 16,
     textAlign: "center",
+    marginBottom: 24,
     color: "#0a7d42",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  loginButton: {
-    backgroundColor: "#0a7d42",
-    padding: 14,
-    borderRadius: 6,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  loginButtonText: {
-    color: "white",
-    fontSize: 16,
     fontWeight: "bold",
   },
+  input: {
+    marginBottom: 16,
+    backgroundColor: "#fff",
+  },
+  loginButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#0a7d42",
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+  },
   persona: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
-    marginBottom: 20,
     alignSelf: "center",
+    marginBottom: 16,
+    backgroundColor: "transparent",
   },
   registerLink: {
-    marginTop: 20,
-    alignItems: "center",
+    marginTop: 16,
   },
   registerLinkText: {
     color: "#666",
+    textAlign: "center",
   },
   registerLinkHighlight: {
     color: "#0a7d42",

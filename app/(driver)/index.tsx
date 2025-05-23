@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
-  ActivityIndicator,
-  Image,
   FlatList,
   TouchableOpacity,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import socket from "@/services/socket";
+import { Text, Button, Provider as PaperProvider } from "react-native-paper";
+import { greenTheme } from "../AppTheme";
 import Toast from "react-native-toast-message";
+import { useQuery } from "@/hooks/useQuery";
+import { rideService } from "@/services/rideService";
 
 interface RideData {
   rideId: string;
@@ -26,9 +29,14 @@ interface RideData {
   };
 }
 
-export default function DriverHome() {
+function DriverHomeScreen() {
   const [userName, setUserName] = useState("Motorista");
   const [rides, setRides] = useState<RideData[]>([]);
+
+  const [corridas, corridasError, refetchCorridas, isCorridasLoading] =
+    useQuery(() => rideService.getRide(), []);
+
+  console.log("corridas,", corridas?.data);
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -49,11 +57,32 @@ export default function DriverHome() {
   }, []);
 
   useEffect(() => {
-    socket.on("new_ride", (rideData: RideData) => {
-      console.log("🚗 Nova corrida recebida:", rideData);
-      setRides((prevRides) => [...prevRides, rideData]);
+    if (corridas?.data?.length) {
+      const mappedRides: RideData[] = corridas?.data?.map((item: any) => ({
+        rideId: item?.id,
+        clientName: item?.nome,
+        origem: {
+          latitude: item?.origem?.latitude,
+          longitude: item?.origem?.longitude,
+        },
+        destino: {
+          latitude: item?.destino?.latitude,
+          longitude: item?.destino?.longitude,
+          nome: item?.destino?.nome,
+        },
+      }));
 
-      // Toast simples
+      setRides(mappedRides);
+    }
+  }, [corridas]);
+
+  useEffect(() => {
+    socket.on("new_ride", (rideData: RideData) => {
+      const alreadyExists = rides.some((ride) => ride.rideId === rideData.rideId);
+      if (!alreadyExists) {
+        setRides((prevRides) => [...prevRides, rideData])
+      }
+
       Toast.show({
         type: "success",
         text1: "Nova corrida solicitada",
@@ -64,50 +93,58 @@ export default function DriverHome() {
     return () => {
       socket.off("new_ride");
     };
-  }, []);
+  }, [rides]);
 
   const renderRide = ({ item }: { item: RideData }) => (
     <View style={styles.rideCard}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.clientName}>{item.clientName}</Text>
-        <Text style={styles.destText}>Destino: {item.destino.nome}</Text>
+      <View style={styles.rideInfo}>
+        <Text variant="bodyLarge" style={styles.clientName}>
+          {item.clientName}
+        </Text>
+        <Text variant="bodyMedium" style={styles.destText}>
+          Destino: {item.destino.nome}
+        </Text>
       </View>
-      <TouchableOpacity style={styles.acceptButton}>
-        <Text style={styles.acceptText}>Aceitar</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        style={styles.acceptButton}
+        labelStyle={styles.acceptText}
+      >
+        Aceitar
+      </Button>
     </View>
   );
 
   return (
     <View style={styles.container}>
       {rides.length === 0 ? (
-        <>
-          <Text style={styles.welcomeText}>
-            Olá, {userName}! Seja bem-vindo ao BoraUni.
+        <View style={styles.emptyState}>
+          <Text variant="headlineMedium" style={styles.welcomeText}>
+            Olá, {userName}!
           </Text>
-          <Text style={styles.instructionText}>
-            Por favor, aguarde algum estudante fazer a solicitação de corrida.
-            Enquanto isso, tome um café :)
+          <Text variant="bodyLarge" style={styles.instructionText}>
+            Bem-vindo ao BoraUni
+          </Text>
+          <Text variant="bodyMedium" style={styles.instructionText}>
+            Aguarde solicitações de corrida
           </Text>
           <Image
             source={require("@/assets/images/cafe.png")}
             style={styles.coffeeImage}
             resizeMode="contain"
           />
-          <ActivityIndicator
-            size="large"
-            color="#0a7d42"
-            style={{ marginTop: 20 }}
-          />
-        </>
+          <ActivityIndicator size="large" color="#0a7d42" />
+        </View>
       ) : (
         <>
-          <Text style={styles.welcomeText}>Corridas Disponíveis</Text>
+          <Text variant="headlineMedium" style={styles.welcomeText}>
+            Corridas Disponíveis
+          </Text>
           <FlatList
             data={rides}
             keyExtractor={(item) => item.rideId}
             renderItem={renderRide}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={styles.ridesList}
           />
         </>
       )}
@@ -116,58 +153,71 @@ export default function DriverHome() {
   );
 }
 
+export default function DriverHome() {
+  return (
+    <PaperProvider theme={greenTheme}>
+      <DriverHomeScreen />
+    </PaperProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
+    backgroundColor: "#ffffff",
+    padding: 24,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   welcomeText: {
-    fontSize: 22,
+    textAlign: "center",
     color: "#0a7d42",
     fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   instructionText: {
-    fontSize: 18,
-    color: "#333",
     textAlign: "center",
-    marginBottom: 30,
-    lineHeight: 24,
+    color: "#333333",
+    marginBottom: 24,
   },
   coffeeImage: {
     width: 150,
     height: 150,
-    alignSelf: "center",
-    marginBottom: 30,
+    marginBottom: 32,
+  },
+  ridesList: {
+    paddingBottom: 24,
   },
   rideCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 15,
-    backgroundColor: "#f2f2f2",
+    padding: 16,
+    backgroundColor: "#f5f5f5",
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  rideInfo: {
+    flex: 1,
   },
   clientName: {
-    fontWeight: "bold",
-    fontSize: 16,
     color: "#0a7d42",
+    fontWeight: "bold",
   },
   destText: {
-    fontWeight: "600",
+    color: "#333333",
     marginTop: 4,
   },
   acceptButton: {
-    backgroundColor: "#0a7d42",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginLeft: 16,
     borderRadius: 8,
-    marginLeft: 10,
+    backgroundColor: "#0a7d42",
   },
   acceptText: {
-    color: "#fff",
+    color: "#ffffff",
     fontWeight: "bold",
   },
 });

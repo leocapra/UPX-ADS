@@ -1,62 +1,50 @@
 import { StyleSheet } from "react-native";
 
- const registerStyles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-  },
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 24,
     backgroundColor: "#fff",
   },
-  backButton: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    zIndex: 1,
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 16,
-    textAlign: "center",
-    color: "#0a7d42",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    marginVertical: 12,
-    color: "#0a7d42",
+    fontSize: 28,
     fontWeight: "bold",
-    marginTop: 20,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#333",
+  },
+  form: {
+    gap: 12,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 8,
     padding: 12,
-    borderRadius: 6,
-    marginBottom: 12,
     fontSize: 16,
+    backgroundColor: "#f9f9f9",
   },
-  registerButton: {
-    backgroundColor: "#0a7d42",
-    padding: 16,
-    borderRadius: 6,
+  error: {
+    color: "red",
+    fontSize: 14,
+    marginTop: -8,
+    marginBottom: 8,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    padding: 15,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 10,
   },
-  registerButtonText: {
-    color: "white",
+  buttonText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
-  persona: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
-    marginBottom: 20,
-    alignSelf: "center",
-  },
 });
 
-
-export { registerStyles }
+export default styles;

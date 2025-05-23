@@ -2,20 +2,25 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   View,
-  Text,
-  TextInput,
   FlatList,
   TouchableOpacity,
-  Platform,
   Linking,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
 } from "react-native";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@/hooks/useMutation";
 import { rideService } from "@/services/rideService";
 import axios from "axios";
-import { styles } from "./indexStyle";
+import {
+  Text,
+  TextInput,
+  Button,
+  Provider as PaperProvider,
+} from "react-native-paper";
+import { greenTheme } from "../AppTheme";
+import Toast from "react-native-toast-message";
 
 interface LocationType {
   latitude: number;
@@ -29,17 +34,15 @@ interface SuggestionType {
   lon: string;
 }
 
-export default function StudentHome() {
+function StudentHomeScreen() {
   const router = useRouter();
-
   const [currentLocation, setCurrentLocation] = useState<LocationType | null>(
     null
   );
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionType[]>([]);
   const [destination, setDestination] = useState<SuggestionType | null>(null);
-  const [isRiding, setIsRiding] = useState(false);
-  const [rideRequested, setRideRequested] = useState(false); // New state to track if ride was requested
+  const [rideRequested, setRideRequested] = useState(false);
 
   const [mutateCreateRide, createRideLoading] = useMutation(
     rideService.createRide
@@ -131,17 +134,28 @@ export default function StudentHome() {
       };
 
       await mutateCreateRide(payload);
-      console.log("Corrida solicitada com sucesso!");
-      setIsRiding(true);
+      Toast.show({
+        type: "success",
+        text1: "Sucesso!",
+        text2: "Corrida solicitada com sucesso!",
+      });
       setRideRequested(true);
     } catch (err) {
       console.error("Erro ao solicitar corrida:", err);
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "Não foi possível solicitar a corrida",
+      });
     }
   };
 
   const handleFinalizarCorrida = () => {
-    console.log("Corrida finalizada");
-    setIsRiding(false);
+    Toast.show({
+      type: "success",
+      text1: "Corrida finalizada",
+      text2: "Obrigado por usar nosso serviço!",
+    });
     setRideRequested(false);
     setDestination(null);
     setSearch("");
@@ -149,58 +163,157 @@ export default function StudentHome() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Para onde vamos?</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Text variant="headlineMedium" style={styles.title}>
+            Para onde vamos?
+          </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Digite o destino"
-        value={search}
-        onChangeText={setSearch}
-      />
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              label="Destino"
+              placeholder="Digite seu destino"
+              value={search}
+              onChangeText={setSearch}
+              style={styles.input}
+              left={<TextInput.Icon icon="map-marker" />}
+              outlineColor="rgba(10, 125, 66, 0.2)"
+              activeOutlineColor="#0a7d42"
+            />
+          </View>
 
-      {suggestions.length > 0 && (
-        <FlatList
-          data={suggestions}
-          keyExtractor={(item) => item.place_id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                setDestination(item);
-                setSearch(item.display_name);
-                setSuggestions([]);
-              }}
-            >
-              <Text style={styles.suggestion}>{item.display_name}</Text>
-            </TouchableOpacity>
+          {suggestions.length > 0 && (
+            <FlatList
+              data={suggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    setDestination(item);
+                    setSearch(item.display_name);
+                    setSuggestions([]);
+                  }}
+                >
+                  <Text style={styles.suggestionText}>{item.display_name}</Text>
+                </TouchableOpacity>
+              )}
+              style={styles.suggestionsList}
+            />
           )}
-        />
-      )}
 
-      {destination && (
-        <>
-          <TouchableOpacity style={styles.mapButton} onPress={handleOpenMaps}>
-            <Text style={styles.mapButtonText}>Ver rota no Google Maps</Text>
-          </TouchableOpacity>
+          {destination && (
+            <View style={styles.buttonsContainer}>
+              <Button
+                mode="outlined"
+                onPress={handleOpenMaps}
+                style={styles.mapButton}
+                icon="map"
+                textColor="#0a7d42"
+              >
+                Ver rota no Google Maps
+              </Button>
 
-          {!rideRequested ? (
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleSolicitarCorrida}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.confirmButtonText}>Solicitar Corrida</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.confirmButton, styles.finishButton]}
-              onPress={handleFinalizarCorrida}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.confirmButtonText}>Finalizar Corrida</Text>
-            </TouchableOpacity>
+              {!rideRequested ? (
+                <Button
+                  mode="contained"
+                  onPress={handleSolicitarCorrida}
+                  loading={createRideLoading}
+                  disabled={createRideLoading}
+                  style={styles.confirmButton}
+                  labelStyle={styles.buttonText}
+                  icon="car"
+                >
+                  {createRideLoading ? "Solicitando..." : "Solicitar Corrida"}
+                </Button>
+              ) : (
+                <Button
+                  mode="contained"
+                  onPress={handleFinalizarCorrida}
+                  style={[styles.confirmButton, styles.finishButton]}
+                  labelStyle={styles.buttonText}
+                  icon="check"
+                >
+                  Finalizar Corrida
+                </Button>
+              )}
+            </View>
           )}
-        </>
-      )}
+        </View>
+      </ScrollView>
+      <Toast />
     </View>
   );
 }
+
+export default function StudentHome() {
+  return (
+    <PaperProvider theme={greenTheme}>
+      <StudentHomeScreen />
+    </PaperProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  content: {
+    flex: 1,
+  },
+  title: {
+    textAlign: "center",
+    marginVertical: 24,
+    color: "#0a7d42",
+    fontWeight: "bold",
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: "#ffffff",
+  },
+  suggestionsList: {
+    maxHeight: 200,
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  suggestionText: {
+    color: "#333333",
+  },
+  buttonsContainer: {
+    marginTop: 24,
+  },
+  mapButton: {
+    marginBottom: 16,
+    borderColor: "#0a7d42",
+  },
+  confirmButton: {
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#0a7d42",
+  },
+  finishButton: {
+    backgroundColor: "#4CAF50",
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+});
